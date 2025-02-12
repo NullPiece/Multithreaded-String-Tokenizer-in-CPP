@@ -1,3 +1,6 @@
+// TOKENIZER_HPP
+// declaration file for tokenizer.cpp
+
 #ifndef TOKENIZER_HPP
 #define TOKENIZER_HPP
 

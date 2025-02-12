@@ -5,15 +5,24 @@
 #include<functional>
 #include<mutex>
 
+
+// defining a struct which is not local to the tokenizer class.
+// This struct holds the parameters required for toknizing the string
+
 struct _thread {
 
-    int t_id;
-    int s_index;
-    int e_index;
-    _type_token t_tokens;
-    std::thread t;
+    int t_id;                    // holds the id for an individual thread
+    int s_index;                 // starting index of the string to be tokenized
+    int e_index;                 // ending index of the string to be tokenized
+    _type_token t_tokens;        // holds an vector of tokens
+    std::thread t;               // the actual thread which will tokenize the segment of the string
 };
 
+
+/*
+ * @param _content Typically a string of a corpus to be tokenized
+ *
+ */
 _type_token tokenizer::tokenize(std::string _content) {
 
     int start = 0;
@@ -51,9 +60,10 @@ _type_token tokenizer::tokenize(std::string _content) {
     return this->tokens;
 }
 
-int thread_e_idxs[2];
-std::mutex mtx;
-
+/*
+ * @param thread Thread for tokenizing string or a corpus
+ * @param _content Actual string or a corpus to be tokenized
+ */
 void thread_tokenizer(_thread &thread, const std::string &_content) {
 
     int new_end = thread.e_index;
@@ -74,6 +84,9 @@ void thread_tokenizer(_thread &thread, const std::string &_content) {
     thread.t_tokens.emplace_back(_content.substr(new_start, local_char_ptr - new_start));
 }
 
+/*
+ * @param _content Typically a string of a corpus to be tokenized
+ */
 _type_token tokenizer::tokenize_multithreaded(std::string _content) {
 
     int _t_count = 3;
