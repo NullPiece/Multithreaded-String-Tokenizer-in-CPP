@@ -19,11 +19,7 @@ struct _thread {
 };
 
 
-/*
- * @param _content Typically a string of a corpus to be tokenized
- *
- */
-_type_token tokenizer::tokenize(std::string _content) {
+_type_token tokenizer::tokenize(std::string &_content) {
 
     int start = 0;
     int char_ptr = start;
@@ -84,15 +80,13 @@ void thread_tokenizer(_thread &thread, const std::string &_content) {
     thread.t_tokens.emplace_back(_content.substr(new_start, local_char_ptr - new_start));
 }
 
-/*
- * @param _content Typically a string of a corpus to be tokenized
- */
-_type_token tokenizer::tokenize_multithreaded(std::string _content) {
 
-    int _t_count = 3;
+_type_token tokenizer::tokenize_multithreaded(std::string &_content, int _num_threads) {
+
+    int _t_count = _num_threads;
     int end = _content.length();
+    int segment_len = _content.length() / _t_count;
 
-    //  _thread threads[2];
     std::vector<_thread> threads;
     threads.reserve(_t_count);
 
@@ -100,11 +94,9 @@ _type_token tokenizer::tokenize_multithreaded(std::string _content) {
 
         threads.push_back(_thread());
         threads[i].t_id = i + 1;
-        threads[i].s_index = (_content.length() / _t_count) * i;
+        threads[i].s_index = (_content.length() / _t_count) * i;        
+        threads[i].e_index = threads[i].s_index + segment_len;
     }
-
-    threads[0].e_index = _content.length() / _t_count;
-    // std::cout<<"start index 1 : "<<threads[0].e_index<<std::endl;
 
     for(int i = 0; i < _t_count; ++i) {
 
@@ -115,10 +107,9 @@ _type_token tokenizer::tokenize_multithreaded(std::string _content) {
                 ++threads[0].e_index;
         
             threads[1].s_index =  threads[0].e_index + 1;
-            // threads[i].e_index = ((_content.length() / _t_count) * (i + 1)) - 1;
         } else if(threads[i].t_id > 1 && threads[i].t_id < _t_count) {
         
-            while(_content[threads[i].e_index] == ' ')
+            while(_content[threads[i].e_index] != ' ')
                 ++threads[i].e_index;
             
             threads[i + 1].s_index = threads[i].e_index + 1;
@@ -126,18 +117,10 @@ _type_token tokenizer::tokenize_multithreaded(std::string _content) {
             threads[i].e_index = end;
             threads[i].s_index = threads[i - 1].e_index + 1;
         }
-        // else if(threads[i].t_id == _t_count) {
-        //     threads[i].s_index = threads[i - 1].e_index + 1;
-        // }
 
         threads[i].t = std::thread(thread_tokenizer, std::ref(threads[i]), std::ref(_content));
     }
 
-    // for(int i = 0; i < _t_count; ++i) {
-
-    //     std::cout<<"start index : "<<threads[i].s_index<<std::endl;
-    //     std::cout<<"end index : "<<threads[i].e_index<<std::endl;
-    // }
 
     for(int i = 0; i < _t_count; ++i) {
 
